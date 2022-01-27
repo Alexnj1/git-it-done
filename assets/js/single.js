@@ -1,4 +1,19 @@
 var issueConainerEl = document.querySelector ("#issues-container")
+var limitWarningEl = document.querySelector ("#limit-warning")
+var repoNameEl = document.querySelector("#repo-name")
+
+var getRepoName = function () {
+    var queryString = document.location.search
+    var repoName = queryString.split("=")[1];
+
+    if (repoName) {
+        repoNameEl.textContent = repoName
+        getRepoIssues(repoName) 
+    } else {
+        document.location.replace("./index.html");
+
+    }
+}
 
 var getRepoIssues = function (repo) {
     var apiUrl = "https://api.github.com/repos/" + repo + "/issues?direction=asc";
@@ -6,13 +21,27 @@ var getRepoIssues = function (repo) {
     fetch(apiUrl).then(function(response) {
         if (response.ok) {
             response.json().then(function(data) {
-                console.log(data)
                 displayIssues(data)
+
+                if (response.headers.get("Link")) {
+                    displayWarning(repo)
+                }
             })
         } else {
-            alert('There was a problem with your request')
+            document.location.replace("./index.html");
         }
     })
+}
+
+var displayWarning = function (repo) {
+    limitWarningEl.textContent = "To see more than 30 issues, visit "
+
+    var linkEl = document.createElement("a")
+    linkEl.textContent = "See More Issues on GitHub.com";
+    linkEl.setAttribute("href", "https://github.com/" + repo + "/issues");
+    linkEl.setAttribute("target", "_blank");
+
+    limitWarningEl.appendChild(linkEl);
 }
 
 var displayIssues = function (issues) {
@@ -36,9 +65,9 @@ var displayIssues = function (issues) {
         var typeEl = document.createElement("span");
 
         if (issues[i].pull_request) {
-        typeEl.textContent = "(Pull request)";
+        typeEl.textContent = "/ (Pull request)";
         } else {
-        typeEl.textContent = "(Issue)";
+        typeEl.textContent = "/ (Issue)";
         }
 
         
@@ -48,4 +77,4 @@ var displayIssues = function (issues) {
     }
 }
 
-getRepoIssues("facebook/react")
+getRepoName()
